@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import AbstractSet, Iterable, Tuple, Dict, Any, Union
 
 import networkx as nx
+from tqdm import tqdm
 
 # pylint: disable=cyclic-import
 from pyformlang import pda
@@ -826,7 +827,7 @@ class CFG:
         cv_converter = \
             cvc.CFGVariableConverter(states, cfg.variables)
         new_productions = []
-        for production in cfg.productions:
+        for production in tqdm(self.productions):
             if len(production.body) == 2:
                 new_productions += self._intersection_when_two_non_terminals(
                     production, states, cv_converter)
@@ -1086,8 +1087,7 @@ class CFG:
                     body_component = body_component[5:-1]
                 else:
                     type_component = ""
-                if body_component not in EPSILON_SYMBOLS or type_component \
-                        == "TER":
+                if type_component == "TER" or (body_component not in EPSILON_SYMBOLS and not body_component[0].isupper()):
                     body_component = re.sub(r"\\(\||\s)", r"\1", body_component)
                     body_ter = Terminal(body_component)
                     terminals.add(body_ter)
@@ -1097,6 +1097,10 @@ class CFG:
                     body_var = Variable(body_component)
                     variables.add(body_var)
                     body.append(body_var)
+                else:
+                    raise ValueError(
+                        f"The body of the production is not well defined: {body_component}"
+                    )
                 productions.add(Production(head, body))
 
     def is_normal_form(self):
