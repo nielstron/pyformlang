@@ -1104,7 +1104,7 @@ class CFG:
                     raise ValueError(
                         f"The body of the production is not well defined: {body_component}"
                     )
-                productions.add(Production(head, body))
+            productions.add(Production(head, body))
 
     def is_normal_form(self):
         """
