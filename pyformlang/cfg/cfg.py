@@ -1097,7 +1097,7 @@ class CFG:
                     body_var = Variable(body_component)
                     variables.add(body_var)
                     body.append(body_var)
-                    productions.add(Production(head, body))
+                productions.add(Production(head, body))
 
     def is_normal_form(self):
         """
