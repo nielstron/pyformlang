@@ -1087,9 +1087,12 @@ class CFG:
                     body_component = body_component[5:-1]
                 else:
                     type_component = ""
-                if type_component == "TER" or (body_component not in EPSILON_SYMBOLS and not body_component[0].isupper()):
-                    body_component = re.sub(r"\\(\||\s)", r"\1", body_component)
-                    body_ter = Terminal(body_component)
+                if type_component == "TER" or not body_component[0].isupper():
+                    if body_component not in EPSILON_SYMBOLS:
+                        body_component = re.sub(r"\\(\||\s)", r"\1", body_component)
+                        body_ter = Terminal(body_component)
+                    else:
+                        body_ter = Epsilon()
                     terminals.add(body_ter)
                     body.append(body_ter)
                 elif body_component[0] in string.ascii_uppercase or \
