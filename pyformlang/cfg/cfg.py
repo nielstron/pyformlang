@@ -1,6 +1,8 @@
 """ A context free grammar """
+import dataclasses
 import re
 import string
+from collections import defaultdict
 from copy import deepcopy
 from typing import AbstractSet, Iterable, Tuple, Dict, Any, Union
 
@@ -1117,3 +1119,73 @@ class CFG:
         """
         return all(
             production.is_normal_form() for production in self._productions)
+
+@dataclasses.dataclass(frozen=True)
+class EarleyParserState:
+    production: Production
+    position_in_body: int
+    position_in_word: int
+
+    def finished_production(self):
+        return self.position_in_body == len(self.production.body)
+
+class EarleyParser:
+    """
+    A class to parse words of a given CFG, aborting early (sic!) if invalid prefix
+    """
+
+    def __init__(self, cfg: CFG):
+        self.cfg = cfg
+        self.rules_by_head = defaultdict(list)
+        for p in self.cfg.productions:
+            self.rules_by_head[p.head].append(p)
+
+
+    def _init(self, word: list):
+        S = [set() for _ in range(len(word)+1)]
+        return S
+
+    def _complete(self, state: EarleyParserState, k: int, S: list[set[EarleyParserState]]):
+        for new_state in S[state.position_in_word]:
+            try:
+                index_in_body = new_state.production.body.index(state.production.head)
+                if index_in_body == new_state.position_in_body:
+                    S[k].add(EarleyParserState(
+                        new_state.production,
+                        index_in_body+1,
+                        new_state.position_in_word,
+                    ))
+            except ValueError:
+                continue
+
+    def _predict(self, state: EarleyParserState, k: int, S: list[set[EarleyParserState]]):
+        nonterminal = state.production.body[state.position_in_body]
+        for production in self.rules_by_head[nonterminal]:
+            S[k].add(EarleyParserState(production, 0, k))
+
+    def _scan(self, state: EarleyParserState, k: int, word: list, S: list[set[EarleyParserState]]):
+        if state.position_in_word < len(word) and state.production.body[state.position_in_body].value == word[k]:
+            S[k+1].add(EarleyParserState(state.production, state.position_in_body+1, state.position_in_word))
+
+
+    def parse(self, word: list):
+        # based on https://en.wikipedia.org/wiki/Earley_parser
+        S: list[set[EarleyParserState]] = self._init(word)
+        processed = set()
+        # S contains tuples of (production, position in production, position in word)
+        S[0].add(EarleyParserState(Production(Variable("γ"), [self.cfg.start_symbol]), 0, 0))
+        for k in range(len(word)+1):
+            while remaining := S[k].difference(processed):
+                processed.update(remaining)
+                for state in remaining:
+                    if state.finished_production():
+                        self._complete(state, k, S)
+                    else:
+                        if isinstance(state.production.body[state.position_in_body], Variable):
+                            self._predict(state, k, S)
+                        else:
+                            self._scan(state, k, word, S)
+        start_productions = [p for p in self.cfg.productions if p.head == self.cfg.start_symbol]
+        return any(EarleyParserState(s, len(s.body), 0) in S[len(word)] for s in start_productions)
+
+
