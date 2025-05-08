@@ -1,4 +1,5 @@
 """ A context free grammar """
+import re
 import string
 from copy import deepcopy
 from typing import AbstractSet, Iterable, Tuple, Dict, Any, Union
@@ -1073,22 +1074,13 @@ class CFG:
             head_text = head_text[5:-1]
         head = Variable(head_text)
         variables.add(head)
-        for sub_body in body_s.split("|"):
+        # split at any bar except escaped bar
+        for sub_body in re.split(r"(?<!\\)\|", body_s):
             body = []
-            # this section just splits the rule by spaces. it additionally handles an edge case when terminal or nonterminal names contain whitespace
-            body_components: list[str] = list(sub_body.split())
-            new_body_components = []
-            merged = ""
-            for component in body_components:
-                merged += component
-                if '"TER:' in component or '"VAR:' in component and component.count('"') != 2:
-                    merged += " "
+            # split at any space except escaped space
+            for body_component in re.split(r"(?<!\\)\s+", sub_body):
+                if not body_component:
                     continue
-                else:
-                    new_body_components.append(merged)
-                    merged = ""
-            # section end
-            for body_component in new_body_components:
                 if is_special_text(body_component):
                     type_component = body_component[1:4]
                     body_component = body_component[5:-1]
@@ -1101,6 +1093,7 @@ class CFG:
                     body.append(body_var)
                 elif body_component not in EPSILON_SYMBOLS or type_component \
                         == "TER":
+                    body_component = re.sub(r"\\(\||\s)", r"\1", body_component)
                     body_ter = Terminal(body_component)
                     terminals.add(body_ter)
                     body.append(body_ter)
