@@ -303,22 +303,10 @@ class TestCFG:
         assert new_cfg.contains([ter_a, ter_a, ter_b, ter_b, ter_c, ter_d])
 
     def test_complex_concatenation(self):
-        prompt = "JSON"
-        CHARS = "|".join(set(f'"TER:{x}"' for x in string.printable if x not in " |\t\n\r\x0b\x0c"))
-        prompt_split_escaped = ' '.join(f'"TER:{x}"' if x not in ' |' else rf'\{x}' for x in prompt)
-
-        prompt_lang = rf"""S -> {prompt_split_escaped}"""
-        print(prompt_lang)
-        cfg_lang = rf"""
-            S -> Digit
-            Digit -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-        """
-        json_cfg = CFG.from_text(cfg_lang)
-        assert not json_cfg.is_empty()
-        prompt_cfg = CFG.from_text(prompt_lang)
-        assert not json_cfg.is_empty()
-        main_language_fsa = prompt_cfg.concatenate(json_cfg)
-        assert not main_language_fsa.is_empty()
+        first_lang = rf"""S -> "TER:S" """
+        second_lang = rf"""S -> a"""
+        concat = CFG.from_text(first_lang).concatenate(CFG.from_text(second_lang))
+        assert "Sa" in concat
 
     def test_closure(self):
         """ Tests the closure of a cfg """
