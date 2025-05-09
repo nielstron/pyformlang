@@ -829,7 +829,7 @@ class CFG:
         cv_converter = \
             cvc.CFGVariableConverter(states, cfg.variables)
         new_productions = []
-        for production in tqdm(self.productions):
+        for production in tqdm(cfg.productions):
             if len(production.body) == 2:
                 new_productions += self._intersection_when_two_non_terminals(
                     production, states, cv_converter)
