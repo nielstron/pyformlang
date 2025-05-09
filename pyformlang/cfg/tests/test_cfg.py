@@ -1,4 +1,5 @@
 """ Tests the CFG """
+import string
 
 from pyformlang import pda
 from pyformlang.cfg import Production, Variable, Terminal, CFG, Epsilon
@@ -279,6 +280,45 @@ class TestCFG:
         assert len(new_cfg.productions) == 5
         assert not new_cfg.is_empty()
         assert new_cfg.contains([ter_a, ter_a, ter_b, ter_b, ter_a, ter_b])
+
+    def test_concatenation2(self):
+        """ Tests the concatenation of two cfg """
+        var_s = Variable("S")
+        ter_a = Terminal("a")
+        ter_b = Terminal("b")
+        prod0 = Production(var_s, [ter_a, var_s, ter_b])
+        prod1 = Production(var_s, [])
+        cfg = CFG({var_s}, {ter_a, ter_b}, var_s, {prod0, prod1})
+        var_s = Variable("S")
+        ter_c = Terminal("c")
+        ter_d = Terminal("d")
+        prod0 = Production(var_s, [ter_c, var_s, ter_d])
+        prod1 = Production(var_s, [])
+        cfg2 = CFG({var_s}, {ter_c, ter_d}, var_s, {prod0, prod1})
+        new_cfg = cfg + cfg2
+        assert len(new_cfg.variables) == 3
+        assert len(new_cfg.terminals) == 4
+        assert len(new_cfg.productions) == 5
+        assert not new_cfg.is_empty()
+        assert new_cfg.contains([ter_a, ter_a, ter_b, ter_b, ter_c, ter_d])
+
+    def test_complex_concatenation(self):
+        prompt = "JSON"
+        CHARS = "|".join(set(f'"TER:{x}"' for x in string.printable if x not in " |\t\n\r\x0b\x0c"))
+        prompt_split_escaped = ' '.join(f'"TER:{x}"' if x not in ' |' else rf'\{x}' for x in prompt)
+
+        prompt_lang = rf"""S -> {prompt_split_escaped}"""
+        print(prompt_lang)
+        cfg_lang = rf"""
+            S -> Digit
+            Digit -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+        """
+        json_cfg = CFG.from_text(cfg_lang)
+        assert not json_cfg.is_empty()
+        prompt_cfg = CFG.from_text(prompt_lang)
+        assert not json_cfg.is_empty()
+        main_language_fsa = prompt_cfg.concatenate(json_cfg)
+        assert not main_language_fsa.is_empty()
 
     def test_closure(self):
         """ Tests the closure of a cfg """
