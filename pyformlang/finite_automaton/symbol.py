@@ -27,6 +27,4 @@ class Symbol(FiniteAutomatonObject):  # pylint: disable=too-few-public-methods
         return self._value == other
 
     def __hash__(self) -> int:
-        if self._hash is None:
-            self._hash = hash(self._value)
-        return self._hash
+        return hash(self._value)

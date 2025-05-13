@@ -16,7 +16,6 @@ class FiniteAutomatonObject:  # pylint: disable=too-few-public-methods
 
     def __init__(self, value: Any):
         self._value = value
-        self._hash = None
 
     def __repr__(self) -> str:
         return str(self._value)
