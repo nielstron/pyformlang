@@ -42,9 +42,7 @@ class Production:
         return str(self.head) + " -> " + " ".join([str(x) for x in self.body])
 
     def __hash__(self):
-        if self._hash is None:
-            self._hash = sum(map(hash, self._body)) + hash(self._head)
-        return self._hash
+        return sum(map(hash, self._body)) + hash(self._head)
 
     def __eq__(self, other):
         return self.head == other.head and self.body == other.body

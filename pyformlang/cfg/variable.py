@@ -30,12 +30,7 @@ class Variable(CFGObject):  # pylint: disable=too-few-public-methods
         return "Variable(" + str(self.value) + ")"
 
     def __hash__(self):
-        if self._hash is None:
-            self._hash = self._compute_new_hash()
-        return self._hash
-
-    def _compute_new_hash(self):
-        return hash(self._value)
+        return hash((self._value, "Variable"))
 
     def to_text(self) -> str:
         text = str(self._value)
